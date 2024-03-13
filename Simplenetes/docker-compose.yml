@@ -1,0 +1,20 @@
+services:
+  server:
+    build: ./Simplenetes.Server
+    ports:
+      - "8080:8080"
+
+  controller:
+    build: ./Simplenetes.Controller
+
+  database:
+    image: postgres:16.2
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: simplenetes
+    volumes:
+    - type: bind
+      source: ./setup.sql
+      target: /docker-entrypoint-initdb.d/setup.sql
+    ports:
+      - "5432:5432"
