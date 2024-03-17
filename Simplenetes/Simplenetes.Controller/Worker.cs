@@ -1,3 +1,5 @@
+using System.Net.Sockets;
+
 namespace Simplenetes.Controller;
 
 public class Worker : BackgroundService
@@ -11,13 +13,32 @@ public class Worker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        var httpHandler = new SocketsHttpHandler
+        {
+            ConnectCallback = async (ctx, ct) =>
+            {
+                var socketPath = "/var/run/docker.sock";
+                var socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.IP);
+                var endpoint = new UnixDomainSocketEndPoint(socketPath);
+                
+                await socket.ConnectAsync(endpoint, ct);
+                
+                return new NetworkStream(socket, ownsSocket: true);
+            }
+        };
+
+        var httpClient = new HttpClient(httpHandler)
+        {
+            BaseAddress = new Uri("http://localhost")
+        };
+
         while (!stoppingToken.IsCancellationRequested)
         {
-            if (_logger.IsEnabled(LogLevel.Information))
-            {
-                _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-            }
-            await Task.Delay(10_000, stoppingToken);
+            await Task.Delay(1_000, stoppingToken);
+
+            var response = await httpClient.GetAsync("/v1.43/containers/json", stoppingToken);
+
+            _logger.LogInformation("Response: {0}", await response.Content.ReadAsStringAsync());
         }
     }
 }

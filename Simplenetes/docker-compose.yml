@@ -8,6 +8,10 @@ services:
 
   controller:
     build: ./Simplenetes.Controller
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
 
   database:
     image: postgres:16.2
