@@ -3,3 +3,8 @@ CREATE TABLE container (
 	name text,
 	image text
 );
+
+ALTER TABLE container
+ADD CONSTRAINT unique_name UNIQUE (name);
+
+CREATE INDEX idx_name ON container (name);
