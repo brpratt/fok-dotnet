@@ -1,44 +1,35 @@
-using System.Net.Sockets;
+using System.Text.Json;
+using System.Web;
 
 namespace Simplenetes.Controller;
 
 public class Worker : BackgroundService
 {
     private readonly ILogger<Worker> _logger;
+    private readonly HttpClient _dockerClient;
+    private readonly HttpClient _serverClient;
 
-    public Worker(ILogger<Worker> logger)
+    public Worker(ILogger<Worker> logger, IHttpClientFactory httpClientFactory)
     {
         _logger = logger;
+        _dockerClient = httpClientFactory.CreateClient("docker");
+        _serverClient = httpClientFactory.CreateClient("server");
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var httpHandler = new SocketsHttpHandler
-        {
-            ConnectCallback = async (ctx, ct) =>
-            {
-                var socketPath = "/var/run/docker.sock";
-                var socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.IP);
-                var endpoint = new UnixDomainSocketEndPoint(socketPath);
-                
-                await socket.ConnectAsync(endpoint, ct);
-                
-                return new NetworkStream(socket, ownsSocket: true);
-            }
-        };
-
-        var httpClient = new HttpClient(httpHandler)
-        {
-            BaseAddress = new Uri("http://localhost")
-        };
+        var filters = JsonSerializer.Serialize(new { label = new string[] { "simplenetes" } });
+        var dockerEndpoint = new Uri($"/v1.43/containers/json?filters={HttpUtility.UrlEncode(filters)}", UriKind.Relative);
 
         while (!stoppingToken.IsCancellationRequested)
         {
             await Task.Delay(1_000, stoppingToken);
 
-            var response = await httpClient.GetAsync("/v1.43/containers/json", stoppingToken);
+            var dockerResponse = await _dockerClient.GetAsync(dockerEndpoint, stoppingToken);
+            var serverResponse = await _serverClient.GetAsync("/containers", stoppingToken);
 
-            _logger.LogInformation("Response: {0}", await response.Content.ReadAsStringAsync());
+            _logger.LogInformation("Docker Response: {0}", await dockerResponse.Content.ReadAsStringAsync());
+            _logger.LogInformation("Server Response: {0}", await serverResponse.Content.ReadAsStringAsync());
         }
     }
 }

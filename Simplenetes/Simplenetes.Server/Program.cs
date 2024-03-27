@@ -1,11 +1,18 @@
 using Npgsql;
 
-var connectionString = "Host=database;Username=postgres;Password=postgres;Database=simplenetes";
-await using var dataSource = NpgsqlDataSource.Create(connectionString);
-
 var builder = WebApplication.CreateBuilder(args);
 
 var app = builder.Build();
+
+var connectionStringBuilder = new NpgsqlConnectionStringBuilder
+{
+    Host = app.Configuration["Database:Host"],
+    Username = "postgres",
+    Password = "postgres",
+    Database = "simplenetes"
+};
+
+await using var dataSource = NpgsqlDataSource.Create(connectionStringBuilder.ConnectionString);
 
 app.MapGet("/containers", async () =>
 {
