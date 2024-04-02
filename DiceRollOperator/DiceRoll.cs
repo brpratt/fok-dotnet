@@ -11,6 +11,9 @@ public class DiceRollSpec
 {
     [JsonPropertyName("dice")]
     public string[] Dice { get; set; }
+
+    [JsonPropertyName("modifier")]
+    public int Modifier { get; set; }
 }
 
 public class DiceRollStatus

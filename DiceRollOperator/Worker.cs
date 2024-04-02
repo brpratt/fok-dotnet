@@ -26,7 +26,7 @@ public class Worker : BackgroundService
             {
                 diceroll.Status = new DiceRollStatus
                 {
-                    Result = new Random().Next(1, 7)
+                    Result = diceroll.Spec.Dice.Sum(Roll) + diceroll.Spec.Modifier
                 };
 
                 _kubernetes.CustomObjects.PatchNamespacedCustomObjectStatus<DiceRoll>(
@@ -40,4 +40,16 @@ public class Worker : BackgroundService
             }
         }
     }
+
+    private int Roll(string die) => die switch
+    {
+        "D4" => new Random().Next(1, 5),
+        "D6" => new Random().Next(1, 7),
+        "D8" => new Random().Next(1, 9),
+        "D10" => new Random().Next(1, 11),
+        "D12" => new Random().Next(1, 13),
+        "D20" => new Random().Next(1, 21),
+        "D100" => new Random().Next(1, 101),
+        _ => 1
+    };
 }
