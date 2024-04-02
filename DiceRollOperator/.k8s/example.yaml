@@ -1,0 +1,7 @@
+apiVersion: example.com/v1
+kind: DiceRoll
+metadata:
+  name: my-dice-roll
+spec:
+  dice:
+  - D20

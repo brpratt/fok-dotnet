@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Simplenetes.Controller", "S
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Simplenetes.Server", "Simplenetes\Simplenetes.Server\Simplenetes.Server.csproj", "{1CE6A0A1-F794-49DB-AC9A-1CBC15F5F83C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiceRollOperator", "DiceRollOperator\DiceRollOperator.csproj", "{C45C1895-C2FC-4E75-AFC9-F63306AFB4CC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,6 +28,10 @@ Global
 		{1CE6A0A1-F794-49DB-AC9A-1CBC15F5F83C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1CE6A0A1-F794-49DB-AC9A-1CBC15F5F83C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1CE6A0A1-F794-49DB-AC9A-1CBC15F5F83C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C45C1895-C2FC-4E75-AFC9-F63306AFB4CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C45C1895-C2FC-4E75-AFC9-F63306AFB4CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C45C1895-C2FC-4E75-AFC9-F63306AFB4CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C45C1895-C2FC-4E75-AFC9-F63306AFB4CC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{4AE86126-1717-433D-827A-705854CE0353} = {6C7EEB80-4628-4564-ABD7-B22A253D5530}
