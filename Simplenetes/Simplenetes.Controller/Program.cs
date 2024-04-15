@@ -35,7 +35,7 @@ builder.Services.AddHttpClient("docker")
     })
     .ConfigureHttpClient(c =>
     {
-        c.BaseAddress = new Uri("http://localhost");
+        c.BaseAddress = new Uri("http://localhost/v1.43");
     });
 
 builder.Services.AddHttpClient("server")

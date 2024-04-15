@@ -37,7 +37,7 @@ public class Worker : BackgroundService
     private async Task<List<Container>> GetActualContainers(CancellationToken stoppingToken)
     {
         var filters = JsonSerializer.Serialize(new { label = new string[] { "simplenetes" } });
-        var endpoint = new Uri($"/v1.43/containers/json?filters={HttpUtility.UrlEncode(filters)}", UriKind.Relative);
+        var endpoint = new Uri($"/containers/json?filters={HttpUtility.UrlEncode(filters)}", UriKind.Relative);
 
         var response = await _dockerClient.GetAsync(endpoint, stoppingToken);
         var dockerContainers = await response.Content.ReadFromJsonAsync<DockerContainer[]>(cancellationToken: stoppingToken) ?? [];
@@ -52,16 +52,19 @@ public class Worker : BackgroundService
 
         foreach (var container in toCreate)
         {
+            _logger.LogInformation("Pulling image {Image}", container.Image);
+            await _dockerClient.PostAsync($"/images/create?fromImage={container.Image}", null);
+
             _logger.LogInformation("Creating container {Name}", container.Name);
-            var content = JsonContent.Create(new { Image = container.Image, Labels = new { simplenetes = "" } });
-            await _dockerClient.PostAsync($"/v1.43/containers/create?name={container.Name}", content);
-            await _dockerClient.PostAsync($"/v1.43/containers/{container.Name}/start", null);
+            var createContainerContent = JsonContent.Create(new { Image = container.Image, Labels = new { simplenetes = "" } });
+            await _dockerClient.PostAsync($"/containers/create?name={container.Name}", createContainerContent);
+            await _dockerClient.PostAsync($"/containers/{container.Name}/start", null);
         }
 
         foreach (var container in toDelete)
         {
             _logger.LogInformation("Deleting container {Name}", container.Name);
-            await _dockerClient.DeleteAsync($"/v1.43/containers/{container.Name}?force=true");
+            await _dockerClient.DeleteAsync($"/containers/{container.Name}?force=true");
         }
     }
 }
