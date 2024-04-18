@@ -36,13 +36,22 @@ spec:
                   - D12
                   - D20
                   - D100
-                description: List of D&D dice to roll
-              modifier:
-                type: integer
-                description: Modifier to add to the result
+                description: List of dice to roll
           status:
             type: object
             properties:
-              result:
+              total:
                 type: integer
-                description: Result of the dice roll
+                description: Sum of the results
+              results:
+                type: array
+                description: Results of the individual rolls
+                items:
+                  type: object
+                  properties:
+                    die:
+                      type: string
+                      description: The die that was rolled
+                    value:
+                      type: integer
+                      description: The value of the roll

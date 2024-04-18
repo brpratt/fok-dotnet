@@ -20,25 +20,53 @@ public class Worker : BackgroundService
 
         await foreach (var (watchEventType, diceroll) in client.WatchAsync<DiceRoll>(cancel: stoppingToken))
         {
-            _logger.LogInformation("DiceRoll: {0} {1}", watchEventType, diceroll.Metadata.Name);
+            _logger.LogInformation("DiceRoll: {EventType} {Name}", watchEventType, diceroll.Metadata.Name);
 
-            if (watchEventType == WatchEventType.Added)
+            if (watchEventType == WatchEventType.Added || watchEventType == WatchEventType.Modified)
             {
-                diceroll.Status = new DiceRollStatus
+                if (NeedsToBeRolled(diceroll))
                 {
-                    Result = diceroll.Spec.Dice.Sum(Roll) + diceroll.Spec.Modifier
-                };
-
-                _kubernetes.CustomObjects.PatchNamespacedCustomObjectStatus<DiceRoll>(
-                    new V1Patch(diceroll, V1Patch.PatchType.MergePatch),
-                    diceroll.ApiGroup(),
-                    diceroll.ApiGroupVersion(),
-                    diceroll.Namespace(),
-                    "dicerolls",
-                    diceroll.Metadata.Name
-                );
+                    _logger.LogInformation("DiceRoll: Rolling {Name}", diceroll.Metadata.Name);
+                    Roll(diceroll);
+                    await UpdateStatus(diceroll);
+                }
             }
         }
+    }
+
+    private bool NeedsToBeRolled(DiceRoll diceRoll)
+    {
+        if (diceRoll.Status == null)
+        {
+            return true;
+        }
+
+        if (diceRoll.Spec.Dice.Length != diceRoll.Status.Results.Count)
+        {
+            return true;
+        }
+
+        return diceRoll.Spec.Dice
+            .Select((die, index) => (die, index))
+            .Any(pair => pair.die != diceRoll.Status.Results[pair.index].Die);
+    }
+
+    private void Roll(DiceRoll diceRoll)
+    {
+        var results = diceRoll.Spec.Dice.Select(
+            die => new DiceRollResult
+            {
+                Die = die,
+                Value = Roll(die)
+            }).ToList();
+
+        var total = results.Sum(result => result.Value);
+
+        diceRoll.Status = new DiceRollStatus
+        {
+            Total = total,
+            Results = results
+        };
     }
 
     private int Roll(string die) => die switch
@@ -52,4 +80,13 @@ public class Worker : BackgroundService
         "D100" => new Random().Next(1, 101),
         _ => 1
     };
+
+    private Task UpdateStatus(DiceRoll diceRoll) =>
+        _kubernetes.CustomObjects.PatchNamespacedCustomObjectStatusAsync<DiceRoll>(
+            new V1Patch(diceRoll, V1Patch.PatchType.MergePatch),
+            diceRoll.ApiGroup(),
+            diceRoll.ApiGroupVersion(),
+            diceRoll.Namespace(),
+            "dicerolls",
+            diceRoll.Metadata.Name);
 }

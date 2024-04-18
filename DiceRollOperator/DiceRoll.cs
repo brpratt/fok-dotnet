@@ -1,5 +1,4 @@
 using System.Text.Json.Serialization;
-using IdentityModel.OidcClient;
 using k8s;
 using k8s.Models;
 
@@ -11,15 +10,24 @@ public class DiceRollSpec
 {
     [JsonPropertyName("dice")]
     public string[] Dice { get; set; }
+}
 
-    [JsonPropertyName("modifier")]
-    public int Modifier { get; set; }
+public class DiceRollResult
+{
+    [JsonPropertyName("die")]
+    public string Die { get; set; }
+
+    [JsonPropertyName("value")]
+    public int Value { get; set; }
 }
 
 public class DiceRollStatus
 {
-    [JsonPropertyName("result")]
-    public int Result { get; set; }
+    [JsonPropertyName("total")]
+    public int Total { get; set; }
+
+    [JsonPropertyName("results")]
+    public List<DiceRollResult> Results { get; set; }
 }
 
 public class DiceRoll : IKubernetesObject<V1ObjectMeta>
