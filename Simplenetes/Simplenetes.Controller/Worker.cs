@@ -4,6 +4,14 @@ using System.Web;
 
 namespace Simplenetes.Controller;
 
+record Container(string Name, string Image);
+
+record DockerContainer(string[] Names, string Image);
+
+enum ActionKind { Create, Delete }
+
+record Action(ActionKind Kind, Container Container);
+
 public class Worker : BackgroundService
 {
     private readonly ILogger<Worker> _logger;
@@ -25,7 +33,8 @@ public class Worker : BackgroundService
             {
                 var desired = await GetDesiredContainers(stoppingToken);
                 var actual = await GetActualContainers(stoppingToken);
-                await Reconcile(desired, actual, stoppingToken);
+                var actions = CalculateActions(desired, actual);
+                await Process(actions, stoppingToken);
             }
             catch (Exception ex)
             {
@@ -43,8 +52,6 @@ public class Worker : BackgroundService
         return await response.Content.ReadFromJsonAsync<List<Container>>(cancellationToken: stoppingToken) ?? [];
     }
 
-    private record DockerContainer(string[] Names, string Image);
-
     private async Task<List<Container>> GetActualContainers(CancellationToken stoppingToken)
     {
         var filters = JsonSerializer.Serialize(new { label = new string[] { "simplenetes" } });
@@ -58,34 +65,56 @@ public class Worker : BackgroundService
         return dockerContainers.Select(c => new Container(c.Names[0].TrimStart('/'), c.Image)).ToList();
     }
 
-    private async Task Reconcile(List<Container> desired, List<Container> actual, CancellationToken stoppingToken)
+    private List<Action> CalculateActions(List<Container> desired, List<Container> actual)
     {
-        HttpResponseMessage? response;
+        var toCreate = desired.Except(actual).Select(container => new Action(ActionKind.Create, container));
+        var toDelete = actual.Except(desired).Select(container => new Action(ActionKind.Delete, container));
 
-        var toCreate = desired.Except(actual).ToList();
-        var toDelete = actual.Except(desired).ToList();
+        return toCreate.Concat(toDelete).ToList();
+    }
 
-        foreach (var container in toCreate)
+    private async Task Process(List<Action> actions, CancellationToken stoppingToken)
+    {
+        if (!actions.Any())
         {
-            _logger.LogInformation("Pulling image {Image}", container.Image);
-            response = await _dockerClient.PostAsync($"/images/create?fromImage={container.Image}", null, stoppingToken);
-            response.EnsureSuccessStatusCode();
-
-            _logger.LogInformation("Creating container {Name}", container.Name);
-            var createContainerContent = JsonContent.Create(new { Image = container.Image, Labels = new { simplenetes = "" } });
-            response = await _dockerClient.PostAsync($"/containers/create?name={container.Name}", createContainerContent, stoppingToken);
-            response.EnsureSuccessStatusCode();
-
-            _logger.LogInformation("Starting container {Name}", container.Name);
-            response = await _dockerClient.PostAsync($"/containers/{container.Name}/start", null, stoppingToken);
-            response.EnsureSuccessStatusCode();
+            _logger.LogInformation("No actions to perform");
+            return;
         }
 
-        foreach (var container in toDelete)
+        foreach (var action in actions)
         {
-            _logger.LogInformation("Deleting container {Name}", container.Name);
-            response = await _dockerClient.DeleteAsync($"/containers/{container.Name}?force=true", stoppingToken);
-            response.EnsureSuccessStatusCode();
+            switch (action.Kind)
+            {
+                case ActionKind.Create:
+                    await CreateContainer(action.Container, stoppingToken);
+                    break;
+                case ActionKind.Delete:
+                    await DeleteContainer(action.Container, stoppingToken);
+                    break;
+            }
         }
+    }
+
+    private async Task CreateContainer(Container container, CancellationToken stoppingToken)
+    {
+        _logger.LogInformation("Pulling image {Image}", container.Image);
+        var response = await _dockerClient.PostAsync($"/images/create?fromImage={container.Image}", null, stoppingToken);
+        response.EnsureSuccessStatusCode();
+
+        _logger.LogInformation("Creating container {Name}", container.Name);
+        var createContainerContent = JsonContent.Create(new { Image = container.Image, Labels = new { simplenetes = "" } });
+        response = await _dockerClient.PostAsync($"/containers/create?name={container.Name}", createContainerContent, stoppingToken);
+        response.EnsureSuccessStatusCode();
+
+        _logger.LogInformation("Starting container {Name}", container.Name);
+        response = await _dockerClient.PostAsync($"/containers/{container.Name}/start", null, stoppingToken);
+        response.EnsureSuccessStatusCode();
+    }
+
+    private async Task DeleteContainer(Container container, CancellationToken stoppingToken)
+    {
+        _logger.LogInformation("Deleting container {Name}", container.Name);
+        var response = await _dockerClient.DeleteAsync($"/containers/{container.Name}?force=true", stoppingToken);
+        response.EnsureSuccessStatusCode();
     }
 }
