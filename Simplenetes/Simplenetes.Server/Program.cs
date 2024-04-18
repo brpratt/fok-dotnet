@@ -1,5 +1,7 @@
 using Npgsql;
 
+using Simplenetes.Server;
+
 var builder = WebApplication.CreateBuilder(args);
 
 var app = builder.Build();
@@ -128,5 +130,3 @@ app.MapDelete("/containers/{name}", async (ILogger<Program> logger, string name)
 });
 
 app.Run();
-
-record Container(string Name, string Image);

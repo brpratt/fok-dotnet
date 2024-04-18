@@ -25,7 +25,7 @@ public class Worker : BackgroundService
             {
                 var desired = await GetDesiredContainers(stoppingToken);
                 var actual = await GetActualContainers(stoppingToken);
-                await Reconcile(desired, actual);
+                await Reconcile(desired, actual, stoppingToken);
             }
             catch (Exception ex)
             {
@@ -43,6 +43,8 @@ public class Worker : BackgroundService
         return await response.Content.ReadFromJsonAsync<List<Container>>(cancellationToken: stoppingToken) ?? [];
     }
 
+    private record DockerContainer(string[] Names, string Image);
+
     private async Task<List<Container>> GetActualContainers(CancellationToken stoppingToken)
     {
         var filters = JsonSerializer.Serialize(new { label = new string[] { "simplenetes" } });
@@ -50,12 +52,13 @@ public class Worker : BackgroundService
 
         var response = await _dockerClient.GetAsync(endpoint, stoppingToken);
         response.EnsureSuccessStatusCode();
+
         var dockerContainers = await response.Content.ReadFromJsonAsync<DockerContainer[]>(cancellationToken: stoppingToken) ?? [];
 
         return dockerContainers.Select(c => new Container(c.Names[0].TrimStart('/'), c.Image)).ToList();
     }
 
-    private async Task Reconcile(List<Container> desired, List<Container> actual)
+    private async Task Reconcile(List<Container> desired, List<Container> actual, CancellationToken stoppingToken)
     {
         HttpResponseMessage? response;
 
@@ -65,28 +68,24 @@ public class Worker : BackgroundService
         foreach (var container in toCreate)
         {
             _logger.LogInformation("Pulling image {Image}", container.Image);
-            response = await _dockerClient.PostAsync($"/images/create?fromImage={container.Image}", null);
+            response = await _dockerClient.PostAsync($"/images/create?fromImage={container.Image}", null, stoppingToken);
             response.EnsureSuccessStatusCode();
 
             _logger.LogInformation("Creating container {Name}", container.Name);
             var createContainerContent = JsonContent.Create(new { Image = container.Image, Labels = new { simplenetes = "" } });
-            response = await _dockerClient.PostAsync($"/containers/create?name={container.Name}", createContainerContent);
+            response = await _dockerClient.PostAsync($"/containers/create?name={container.Name}", createContainerContent, stoppingToken);
             response.EnsureSuccessStatusCode();
 
             _logger.LogInformation("Starting container {Name}", container.Name);
-            response = await _dockerClient.PostAsync($"/containers/{container.Name}/start", null);
+            response = await _dockerClient.PostAsync($"/containers/{container.Name}/start", null, stoppingToken);
             response.EnsureSuccessStatusCode();
         }
 
         foreach (var container in toDelete)
         {
             _logger.LogInformation("Deleting container {Name}", container.Name);
-            response = await _dockerClient.DeleteAsync($"/containers/{container.Name}?force=true");
+            response = await _dockerClient.DeleteAsync($"/containers/{container.Name}?force=true", stoppingToken);
             response.EnsureSuccessStatusCode();
         }
     }
 }
-
-record DockerContainer(string[] Names, string Image);
-
-record Container(string Name, string Image);
