@@ -56,19 +56,19 @@ The controller will use the local docker socket to create and delete containers 
 
 ## Examples
 
-Create a new container:
+### Create a new container:
 
 ```
-$ curl -X POST -H 'Content-Type: application/json' http://localhost:5000/containers -e '{ "name": "redis", "image": "redis:latest" }'
+$ curl -X POST -H 'Content-Type: application/json' http://localhost:5000/containers -d '{ "name": "redis", "image": "redis:latest" }'
 ```
 
-Get all of the containers:
+### Get all of the containers:
 
 ```
 $ curl http://localhost:5000/containers
 ```
 
-Delete a container called `redis`:
+### Delete a container called `redis`:
 
 ```
 $ curl -X DELETE http://localhost:5000/containers/redis

@@ -17,13 +17,13 @@ In order to run these projects, you will need the following:
 - [Docker](https://www.docker.com/)
 - [minikube](https://minikube.sigs.k8s.io/docs/)
 
-Note: other cluster tools will likely work (e.g. [kind](https://kind.sigs.k8s.io/) or even a managed cloud cluster) but the directions in this repo assume you are using minikube.
+**Note:** other cluster tools will likely work (e.g. [kind](https://kind.sigs.k8s.io/) or even a managed cloud cluster) but the directions in this repo assume you are using minikube.
 
 ### Codespaces
 
 If you don't want to install any of the above tools locally, the default [GitHub Codespaces](https://github.com/features/codespaces) image contains all the necessary tools.
 
-Note: the majority of the code was developed using GitHub Codespaces.
+**Note:** the majority of the code was developed using GitHub Codespaces :octocat:
 
 ## Running
 
