@@ -33,33 +33,17 @@ public class DiceRollStatus
 public class DiceRoll : IKubernetesObject<V1ObjectMeta>
 {
     [JsonPropertyName("metadata")]
-    public required V1ObjectMeta Metadata { get; set; }
+    public V1ObjectMeta Metadata { get; set; } = new V1ObjectMeta();
 
     [JsonPropertyName("apiVersion")]
-    public required string ApiVersion { get; set; }
+    public string ApiVersion { get; set; } = string.Empty;
 
     [JsonPropertyName("kind")]
-    public required string Kind { get; set; }
+    public string Kind { get; set; } = string.Empty;
 
     [JsonPropertyName("spec")]
-    public required DiceRollSpec Spec { get; set; }
+    public DiceRollSpec Spec { get; set; } = new DiceRollSpec();
 
     [JsonPropertyName("status")]
     public DiceRollStatus? Status { get; set; }
-}
-
-// use this instead?
-// https://github.com/kubernetes-client/csharp/blob/master/src/KubernetesClient/Models/KubernetesList.cs
-public class DiceRollList : IKubernetesObject<V1ListMeta>
-{
-    [JsonPropertyName("metadata")]
-    public required V1ListMeta Metadata { get; set; }
-
-    [JsonPropertyName("apiVersion")]
-    public required string ApiVersion { get; set; }
-
-    [JsonPropertyName("kind")]
-    public required string Kind { get; set; }
-
-    public List<DiceRoll> Items { get; set; } = [];
 }
