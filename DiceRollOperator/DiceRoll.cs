@@ -4,8 +4,6 @@ using k8s.Models;
 
 namespace DiceRollOperator;
 
-// https://github.com/kubernetes-client/csharp/tree/master/examples/customResource
-
 public class DiceRollSpec
 {
     [JsonPropertyName("dice")]
