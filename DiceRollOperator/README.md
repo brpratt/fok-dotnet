@@ -76,7 +76,7 @@ If `STATUS` is `Running`, then everything is working.
 
 ## Examples
 
-### Creating a DiceRoll resource via curl
+### Creating a DiceRoll resource via explicit API calls
 
 First expose the Kubernetes API server as follows:
 
@@ -87,25 +87,31 @@ $ minikube kubectl -- proxy
 Then, in a separate terminal, run the following to create the DiceRoll:
 
 ```
-$ curl -X POST -H 'Content-Type: application/json' http://localhost:8001/apis/example.com/v1/namespaces/default/dicerolls -d '{ "apiVersion": "example.com/v1", "kind": "DiceRoll", "metadata": { "name": "my-first-roll" }, "spec": { "dice": ["D4", "D20"] } }'
+# macOS/Linux
+$ curl -X POST -H 'Content-Type: application/json' http://localhost:8001/apis/example.com/v1/namespaces/default/dicerolls -d '{ "apiVersion": "example.com/v1", "kind": "DiceRoll", "metadata": { "name": "my-dice-roll" }, "spec": { "dice": ["D4", "D20"] } }'
+
+# Windows
+> Invoke-RestMethod -Method Post -ContentType application/json -Uri http://localhost:8001/apis/example.com/v1/namespaces/default/dicerolls -Body '{ "apiVersion": "example.com/v1", "kind": "DiceRoll", "metadata": { "name": "my-dice-roll" }, "spec": { "dice": ["D4", "D20"] } }'
 ```
 
 We can see the result of the roll as follows:
 
 ```
-$ curl http://localhost:8001/apis/example.com/v1/namespaces/default/dicerolls/my-first-roll
-```
+# macOS/Linux
+$ curl http://localhost:8001/apis/example.com/v1/namespaces/default/dicerolls/my-dice-roll | jq '.status'
 
-If you have [`jq`](https://github.com/jqlang/jq) installed, we can extract the status directly:
-
-```
-$ curl -s http://localhost:8001/apis/example.com/v1/namespaces/default/dicerolls/my-first-roll | jq '.status'
+# Windows
+> (Invoke-RestMethod -Uri http://localhost:8001/apis/example.com/v1/namespaces/default/dicerolls/my-dice-roll).status
 ```
 
 Finally, we can delete the resource:
 
 ```
-$ curl -X DELETE http://localhost:8001/apis/example.com/v1/namespaces/default/dicerolls/my-first-roll
+# macOS/Linux
+$ curl -X DELETE http://localhost:8001/apis/example.com/v1/namespaces/default/dicerolls/my-dice-roll
+
+# Windows
+> Invoke-RestMethod -Method Delete http://localhost:8001/apis/example.com/v1/namespaces/default/dicerolls/my-dice-roll
 ```
 
 **Note:** You can stop the kubectl proxy command when you're done sending requests to the API directly.

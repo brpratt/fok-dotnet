@@ -58,18 +58,42 @@ The controller will use the local docker socket to create and delete containers 
 
 ### Create a new container:
 
+macOS/Linux:
+
 ```
 $ curl -X POST -H 'Content-Type: application/json' http://localhost:5000/containers -d '{ "name": "redis", "image": "redis:latest" }'
 ```
 
+Windows:
+
+```
+> Invoke-RestMethod -Method Post -ContentType application/json -Uri http://localhost:5000/containers -Body '{ "name": "redis", "image": "redis:latest" }'
+```
+
 ### Get all of the containers:
+
+macOS/Linux:
 
 ```
 $ curl http://localhost:5000/containers
 ```
 
+Windows:
+
+```
+> Invoke-RestMethod -Uri http://localhost:5000/containers
+```
+
 ### Delete a container called `redis`:
+
+macOS/Linux:
 
 ```
 $ curl -X DELETE http://localhost:5000/containers/redis
+```
+
+Windows:
+
+```
+> Invoke-RestMethod -Method Delete -Uri http://localhost:5000/containers/redis
 ```
